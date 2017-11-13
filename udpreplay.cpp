@@ -28,6 +28,7 @@ SOFTWARE.
 #include <netinet/udp.h>
 #include <pcap/pcap.h>
 #include <unistd.h>
+#include <arpa/inet.h>
 
 int main(int argc, char *argv[]) {
   static const char usage[] =
@@ -37,9 +38,10 @@ int main(int argc, char *argv[]) {
       "  -l          enable loopback\n"
       "  -s speed    replay speed relative to pcap timestamps\n"
       "  -t ttl      packet ttl\n"
-      "  -b          enable broadcast (SO_BROADCAST)";
+      "  -b          enable broadcast (SO_BROADCAST)\n"
+      "  -a addr     outgoing ip address";
 
-  int ifindex = 0;
+  int ifindex = -1;
   int loopback = 0;
   double speed = 1;
   int ttl = -1;
@@ -83,9 +85,12 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  if (ifindex != 0) {
+  if (ifindex != -1) {
     ip_mreqn mreqn;
     memset(&mreqn, 0, sizeof(mreqn));
+    inet_pton(AF_INET, "127.0.0.1", &(mreqn.imr_address));
+    
+    
     mreqn.imr_ifindex = ifindex;
     if (setsockopt(fd, IPPROTO_IP, IP_MULTICAST_IF, &mreqn, sizeof(mreqn)) ==
         -1) {
